@@ -63,6 +63,7 @@
 
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
+; Data definitions for representing the two halves of the "deck"
 (defdata lon (listof nat))
 (defdata los (listof symbol))
 
@@ -74,7 +75,7 @@
 (check= (losp '()) t)
 (check= (lonp '()) t)
 
-
+; common functions from the CS2800 "canon"
 (definec len2 (x :tl) :nat
   (if (endp x)
       0
@@ -90,6 +91,8 @@
       nil
     (app2 (rev2 (rest x)) (list (first x)))))
 
+; takes two lists and interleaves them such that they alternate between the first list and the second list
+; e.g. interleave aaa bbb = ababab
 (definec interleave (x :tl y :tl) :tl
   (cond ((endp x) y)
         ((endp y) x)
@@ -103,7 +106,7 @@
 (check= (interleave (list 1 1 1 1) (list 0 0 )) (list 1 0 1 0 1 1))
 
 
-
+; custom predicate for telling if something is alternating between symbol and nat
 (definec everyotherp (ls :all symb :bool) :bool
   (if (tlp ls)
     (cond
@@ -120,18 +123,20 @@
 (check= (everyotherp '(A) nil) nil)
 (check= (everyotherp '(A 1 B 2 C 3) nil) nil) ;if the symb flag is nil, first item must be a nat
 
-
+; demonstrates that the reverse of a los is still a los
+; used in y-rev2-y-equivalence
 (defthm lemma-1
   (implies (losp ls)
            (losp (rev2 ls))))
 
-
+; demonstrates that the conjecture passes iff (rev2 y) can be simplified to y
 (defthm conjecture-1-simp
   (implies (and (lonp x)
                 (losp y)
                 (equal (len2 x) (len2 y)))
            (everyotherp (interleave x y) nil)))
 
+; created as a rewrite rule to link conjecture-1-simp and conjecture-1
 (defthm  y-rev2-y-equivalence
   (implies (and (lonp x)
                 (losp y)
@@ -144,7 +149,7 @@
 
 
 
-
+; final conjecure, the "goal" of this proof
 (defthm conjecture-1
   (implies (and 
             (lonp x) 
