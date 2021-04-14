@@ -65,8 +65,14 @@
 ;$ACL2s-SMode$;ACL2s
 (defdata lon (listof nat))
 (defdata los (listof symbol))
-(defdata n-or-s (oneof nat symbol))
-(defdata lo-n-or-s (listof n-or-s))
+
+
+(check= (lonp '(1 2 3 4)) t)
+(check= (losp '(A B C D)) t)
+(check= (lonp '(1 2 three 4)) nil)
+(check= (losp '(one two 3 four)) nil)
+(check= (losp '()) t)
+(check= (lonp '()) t)
 
 
 (definec len2 (x :tl) :nat
@@ -86,11 +92,15 @@
 
 (definec interleave (x :tl y :tl) :tl
   (cond ((endp x) y)
-        ((endp y) nil)
+        ((endp y) x)
         (t (cons (car x) (cons (car y) (interleave (cdr x) (cdr y)))))))
 
 (check= (interleave (list 1 1) (list 0 0))
         (list 1 0 1 0))
+(check= (interleave (list 1 1) '()) (list 1 1))
+(check= (interleave '() '()) '())
+(check= (interleave '() (list 1 1)) (list 1 1))
+(check= (interleave (list 1 1 1 1) (list 0 0 )) (list 1 0 1 0 1 1))
 
 
 
@@ -105,20 +115,24 @@
 
 
 (check= (everyotherp (interleave '(A B C D E) '(1 2 3 4 5)) t)  t)
+(check= (everyotherp '() nil) t)
+(check= (everyotherp '(A) t) t)
+(check= (everyotherp '(A) nil) nil)
+(check= (everyotherp '(A 1 B 2 C 3) nil) nil) ;if the symb flag is nil, first item must be a nat
 
 
-(defthm lemma1
+(defthm lemma-1
   (implies (losp ls)
            (losp (rev2 ls))))
 
 
-(defthm lemma-2
+(defthm conjecture-1-simp
   (implies (and (lonp x)
                 (losp y)
                 (equal (len2 x) (len2 y)))
            (everyotherp (interleave x y) nil)))
 
-(defthm lemma-3
+(defthm  y-rev2-y-equivalence
   (implies (and (lonp x)
                 (losp y)
                 (losp (rev2 y))
@@ -126,7 +140,7 @@
            (equal (everyotherp (interleave x y) nil)
                   (everyotherp (interleave x (rev2 y)) nil)))
   :hints (("Goal"
-           :use (:instance lemma-2 (x x) (y (rev2 y))))))
+           :use (:instance conjecture-1-simp (x x) (y (rev2 y))))))
 
 
 
@@ -136,11 +150,11 @@
             (lonp x) 
             (losp y)
             (equal (len2 x) (len2 y)))
-           (everyotherp (interleave x y) nil))
+           (everyotherp (interleave x (rev2 y)) nil))
   :rule-classes ((:rewrite))
   :hints (("Goal"
-           :in-theory (disable lemma-2)
-           :use (:instance lemma-2 (x x) (y y))
+           :in-theory (disable conjecture-1-simp)
+           :use (:instance conjecture-1-simp (x x) (y y))
            )))#|ACL2s-ToDo-Line|#
 
   
